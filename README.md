@@ -10,7 +10,7 @@ Crie um treinador, escolha tipos favoritos e um estilo de jogo e receba até sei
 
 - Cadastro de treinadores e atualização de preferências.
 - Recomendações com foco em ataque, defesa, velocidade, equilíbrio ou tipos favoritos.
-- Consulta e cadastro de Pokémon; registro de avaliações de 1 a 5.
+- Consulta e cadastro de Pokémon pela interface ou API; registro de avaliações de 1 a 5.
 - Cadastro separado de objetos do universo Pokémon, como Pokébolas e poções.
 - Interface web para criar um treinador e descobrir o time; API interativa em `/docs`.
 
@@ -48,7 +48,7 @@ O catálogo é baseado no [Pokémon for Data Mining and Machine Learning](https:
 | `Catch_Rate` | Taxa base de captura. |
 | `Body_Style` | Formato corporal. |
 
-O sistema atual importa apenas **identificador, nome, tipos, HP, ataque, defesa, ataque especial, defesa especial, velocidade, geração e status lendário**. As demais colunas permanecem no CSV para futuras análises e não influenciam as recomendações nesta versão.
+O sistema importa as 23 colunas do CSV. O cálculo de recomendação utiliza **tipos, HP, ataque, defesa, ataque especial, defesa especial, velocidade e status lendário**; os demais atributos são mantidos para consulta e não influenciam o ranking nesta versão.
 
 ### Origem e limitações
 
@@ -57,6 +57,15 @@ O sistema atual importa apenas **identificador, nome, tipos, HP, ataque, defesa,
 - O catálogo não inclui histórico de treinadores. Os **cinco treinadores e suas avaliações iniciais são fictícios**, criados para demonstrar a filtragem colaborativa.
 - Pokémon e nomes relacionados pertencem aos respectivos titulares. Este projeto é uma iniciativa acadêmica de fãs.
 - Novos treinadores, preferências e avaliações são persistidos no SQLite. Objetos do universo Pokémon são cadastrados separadamente e não participam do ranking.
+- Pokémon criados antes da ampliação do catálogo preservam seus dados existentes, mas podem ter metadados adicionais vazios; a aplicação não inventa esses valores.
+
+### Cadastro e imagens
+
+Na página inicial, abra **Cadastrar Pokémon** e preencha os dados do novo item. O total de atributos é calculado pelo sistema; segundo tipo e segundo grupo de ovo podem ficar vazios. A probabilidade de ser macho é exigida apenas quando o Pokémon possui gênero.
+
+As imagens dos Pokémon originais usam links para os [sprites da PokéAPI](https://github.com/PokeAPI/sprites), associados ao número da Pokédex. Elas são carregadas pelo navegador e precisam de conexão. Para um Pokémon cadastrado, informe opcionalmente o link direto da imagem: o sistema não pressupõe que um ID novo corresponda ao mesmo Pokémon na PokéAPI. Sem link, ou se a imagem não carregar, o cartão usa um símbolo de substituição. Os direitos das imagens pertencem aos respectivos titulares.
+
+O `POST /pokemon` agora exige os atributos obrigatórios do dataset, além dos atributos de batalha já exigidos antes. Clientes externos que utilizavam o formato anterior devem enviar os novos campos; `GET /pokemon/{id}` também retorna os metadados e o link da imagem.
 
 ## 🚀 Como executar
 
