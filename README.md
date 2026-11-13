@@ -1,26 +1,162 @@
-# ⚡ Monte seu time Pokémon
+<div align="center">
 
-**Um projeto acadêmico de recomendação híbrida para ajudar treinadores a descobrir seu próximo time.**
+# ⚡ PokéMatch
 
-Crie um treinador, escolha tipos favoritos e um estilo de jogo e receba até seis Pokémon ordenados por afinidade. A aplicação combina características dos Pokémon com avaliações de treinadores e oferece uma API documentada com FastAPI.
+### Um time com a sua cara.
 
-> 🎓 **Objetivo acadêmico:** aplicar conceitos de sistemas de recomendação, modelagem de dados, APIs, testes e containerização em um projeto prático. Os resultados demonstram o funcionamento das técnicas; não representam uma avaliação com jogadores reais.
+Um projeto acadêmico de recomendação híbrida que combina o perfil de treinadores<br>
+com características e avaliações de Pokémon para sugerir um time personalizado.
 
-## 🧭 Visão geral
+**[Começar](#-comece-por-aqui)** · **[Funcionalidades](#-o-que-você-pode-fazer)** · **[Modelo](#-como-funciona-a-recomendação)** · **[Dataset](#-sobre-os-dados)**
 
-- Cadastro de treinadores e atualização de preferências.
-- Recomendações com foco em ataque, defesa, velocidade, equilíbrio ou tipos favoritos.
-- Consulta e cadastro de Pokémon pela interface ou API; registro de avaliações de 1 a 5.
-- Cadastro separado de objetos do universo Pokémon, como Pokébolas e poções.
-- Interface web para criar um treinador e descobrir o time; API interativa em `/docs`.
+</div>
 
-## 📊 Dataset
+---
 
-O catálogo é baseado no [Pokémon for Data Mining and Machine Learning](https://www.kaggle.com/datasets/alopez247/pokemon), disponibilizado no Kaggle por **Asier López Zorrilla**. O arquivo [pokemon_alopez247.csv](data/pokemon_alopez247.csv) incluído no projeto contém **721 registros, 721 identificadores únicos e 23 colunas**, abrangendo as seis primeiras gerações.
+## ✦ Sobre o projeto
 
-**Por que escolhemos esta base?** Ela reúne, em um único CSV, tipos e atributos numéricos diretamente úteis para comparar Pokémon com as preferências de um treinador. Seu tamanho facilita o estudo, a execução local e a reprodução da atividade. Como a base não inclui as gerações mais recentes, o catálogo inicial não pretende representar todos os Pokémon existentes.
+O PokéMatch é um protótipo para estudar sistemas de recomendação, APIs, persistência de dados, testes e containerização. O usuário cria um treinador, escolhe suas preferências e recebe **até seis Pokémon** ordenados por afinidade.
 
-### Colunas do arquivo original
+> **Projeto acadêmico:** os cinco treinadores iniciais e suas avaliações são fictícios. As recomendações demonstram o funcionamento do modelo e não foram validadas com jogadores reais.
+
+**Tecnologias:** Python · FastAPI · SQLite · JavaScript · Docker
+
+## 🚀 Comece por aqui
+
+Com Docker e Docker Compose instalados, execute na pasta do projeto:
+
+```bash
+docker compose up --build
+```
+
+| Acesso local | Endereço |
+| --- | --- |
+| Aplicação | [localhost:8000](http://localhost:8000) |
+| Documentação interativa da API | [localhost:8000/docs](http://localhost:8000/docs) |
+
+Os treinadores, as preferências, as avaliações e os cadastros são salvos em um volume Docker. Para parar a aplicação, pressione `Ctrl+C`; os dados permanecem no volume.
+
+<details>
+<summary><strong>Executar sem Docker</strong></summary>
+
+Com Python 3.10 ou superior:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+No Windows, ative o ambiente com `.venv\Scripts\activate`. A aplicação usa SQLite e cria o banco local na primeira execução.
+
+</details>
+
+## 🎮 O que você pode fazer
+
+<details>
+<summary><strong>01 · Criar e editar um treinador</strong></summary>
+
+- Escolher um nome, tipos favoritos e um estilo de jogo: equilibrado, ataque, defesa, velocidade ou prioridade aos tipos.
+- Definir se Pokémon lendários podem aparecer nas recomendações.
+- Selecionar um treinador salvo, alterar suas preferências e gerar o time novamente. A interface atual não oferece edição do nome.
+- Registrar avaliações de 1 a 5 pela API para alimentar o componente colaborativo.
+
+Os cinco perfis iniciais — Lia, Caio, Bianca, Rafael e Sofia — são exemplos fictícios.
+
+</details>
+
+<details>
+<summary><strong>02 · Descobrir e analisar um time</strong></summary>
+
+- Receber até seis Pokémon de acordo com as preferências e as interações disponíveis.
+- Visualizar os atributos base de vida, ataque, defesa e velocidade em gráficos de linhas.
+- Acompanhar a média de cada atributo para os Pokémon exibidos no time.
+- Alterar as preferências e executar novamente a busca.
+
+Os gráficos mostram os atributos dos Pokémon recomendados; eles não representam evolução temporal ou desempenho em batalhas.
+
+</details>
+
+<details>
+<summary><strong>03 · Cadastrar e consultar Pokémon</strong></summary>
+
+- Procurar Pokémon na API por nome ou consultar um item pelo número da Pokédex.
+- Adicionar Pokémon na página ou pela API, preenchendo os atributos obrigatórios do catálogo.
+- Calcular automaticamente o total dos seis atributos de batalha. Segundo tipo e segundo grupo de ovo são opcionais; a probabilidade de ser macho é exigida quando o Pokémon possui gênero.
+- Informar opcionalmente um link direto de imagem. Sem ele, o cartão mostra um símbolo de substituição.
+
+Um Pokémon cadastrado passa a fazer parte do catálogo usado nas próximas recomendações. A API exige os novos metadados obrigatórios; clientes do formato anterior precisam enviar esses campos.
+
+</details>
+
+<details>
+<summary><strong>04 · Cadastrar objetos</strong></summary>
+
+Pela API, é possível registrar e listar objetos como Pokébolas e poções, informando nome, categoria e descrição. Esse catálogo é separado: **os objetos não entram no ranking de Pokémon** nesta versão.
+
+</details>
+
+## 🧠 Como funciona a recomendação
+
+O modelo combina duas abordagens:
+
+1. **Conteúdo:** compara tipos favoritos e estilo do treinador com os tipos e atributos base de cada Pokémon. Os atributos numéricos são normalizados usando 255 como referência.
+2. **Colaborativo:** usa similaridade de cosseno entre avaliações para aproveitar padrões de treinadores com Pokémon avaliados em comum.
+
+Quando há sinal colaborativo para um candidato, o resultado combina **70% de conteúdo e 30% de colaborativo**. Sem esse sinal — como ocorre com um treinador novo sem avaliações — a recomendação usa conteúdo.
+
+Os pesos são escolhas didáticas, sem ajuste ou validação com usuários reais. O score é uma aproximação de afinidade individual: ele **não garante o melhor time competitivo**, a cobertura de tipos ou a sinergia entre os seis. Pokémon já avaliados ainda podem ser recomendados.
+
+## 🔌 API
+
+Todos os campos e operações podem ser experimentados no [Swagger](http://localhost:8000/docs), com a aplicação em execução.
+
+<details>
+<summary><strong>Ver endpoints disponíveis</strong></summary>
+
+| Método | Endpoint | Função |
+| --- | --- | --- |
+| `GET` | `/opcoes` | Listar tipos e estilos disponíveis. |
+| `GET` | `/treinadores` | Listar treinadores salvos. |
+| `POST` | `/treinadores` | Criar um treinador. |
+| `PUT` | `/treinadores/{id}/preferencias` | Atualizar preferências. |
+| `GET` | `/treinadores/{id}/time` | Obter até seis Pokémon; aceita `estilo` opcional. |
+| `POST` | `/treinadores/{id}/avaliacoes` | Registrar ou atualizar uma avaliação. |
+| `GET` | `/pokemon` | Buscar Pokémon; aceita `busca` e `limite`. |
+| `GET` | `/pokemon/{id}` | Consultar os dados de um Pokémon. |
+| `POST` | `/pokemon` | Cadastrar Pokémon. |
+| `GET` | `/objetos` | Listar objetos cadastrados. |
+| `POST` | `/objetos` | Cadastrar um objeto. |
+
+A aplicação é um protótipo local sem autenticação: quem tiver acesso a ela poderá consultar e alterar os perfis disponíveis.
+
+</details>
+
+## 🧪 Testes
+
+<details>
+<summary><strong>Executar testes automatizados</strong></summary>
+
+Com as dependências do projeto instaladas no ambiente virtual:
+
+```bash
+pip install httpx
+python -m unittest discover -s tests -v
+```
+
+Os testes usam um banco temporário, separado dos dados da aplicação.
+
+</details>
+
+## 📊 Sobre os dados
+
+O catálogo inicial usa o dataset [Pokémon for Data Mining and Machine Learning](https://www.kaggle.com/datasets/alopez247/pokemon), de **Asier López Zorrilla**. O [CSV incluído no projeto](data/pokemon_alopez247.csv) contém **721 registros, 721 IDs únicos e 23 colunas**, das seis primeiras gerações.
+
+Escolhemos essa base porque ela reúne tipos e atributos numéricos úteis para comparar Pokémon com as preferências do treinador, em um arquivo pequeno e fácil de reproduzir. Ela não cobre as gerações mais recentes nem representa separadamente todas as formas alternativas.
+
+<details>
+<summary><strong>Ver as 23 colunas do dataset</strong></summary>
 
 | Coluna | Descrição |
 | --- | --- |
@@ -48,66 +184,19 @@ O catálogo é baseado no [Pokémon for Data Mining and Machine Learning](https:
 | `Catch_Rate` | Taxa base de captura. |
 | `Body_Style` | Formato corporal. |
 
-O sistema importa as 23 colunas do CSV. O cálculo de recomendação utiliza **tipos, HP, ataque, defesa, ataque especial, defesa especial, velocidade e status lendário**; os demais atributos são mantidos para consulta e não influenciam o ranking nesta versão.
+O sistema importa as 23 colunas. O ranking utiliza **tipos, HP, ataque, defesa, ataque especial, defesa especial, velocidade e status lendário**; os demais campos ficam disponíveis para consulta. Pokémon criados antes da ampliação do catálogo preservam seus dados e podem ter metadados adicionais vazios.
 
-### Origem e limitações
+</details>
 
-- **Licença do dataset:** [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/); consulte seus termos antes de reutilizar os dados.
-- A base representa uma forma selecionada por espécie: formas alternativas e megaevoluções não são cadastradas como entradas separadas.
-- O catálogo não inclui histórico de treinadores. Os **cinco treinadores e suas avaliações iniciais são fictícios**, criados para demonstrar a filtragem colaborativa.
-- Pokémon e nomes relacionados pertencem aos respectivos titulares. Este projeto é uma iniciativa acadêmica de fãs.
-- Novos treinadores, preferências e avaliações são persistidos no SQLite. Objetos do universo Pokémon são cadastrados separadamente e não participam do ranking.
-- Pokémon criados antes da ampliação do catálogo preservam seus dados existentes, mas podem ter metadados adicionais vazios; a aplicação não inventa esses valores.
+<details>
+<summary><strong>Imagens, créditos e licença</strong></summary>
 
-### Cadastro e imagens
+As imagens dos Pokémon originais usam links dos [sprites da PokéAPI](https://github.com/PokeAPI/sprites), associados ao número da Pokédex e carregados pelo navegador. Elas dependem de conexão. Para um Pokémon novo, o link é opcional e deve ser informado no cadastro; o sistema não presume que o ID corresponda à imagem de outro Pokémon.
 
-Na página inicial, abra **Cadastrar Pokémon** e preencha os dados do novo item. O total de atributos é calculado pelo sistema; segundo tipo e segundo grupo de ovo podem ficar vazios. A probabilidade de ser macho é exigida apenas quando o Pokémon possui gênero.
+O dataset informa licença [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). Pokémon, seus nomes e imagens pertencem aos respectivos titulares. Este repositório é um projeto acadêmico de fãs; consulte os termos das fontes antes de reutilizar seus conteúdos.
 
-As imagens dos Pokémon originais usam links para os [sprites da PokéAPI](https://github.com/PokeAPI/sprites), associados ao número da Pokédex. Elas são carregadas pelo navegador e precisam de conexão. Para um Pokémon cadastrado, informe opcionalmente o link direto da imagem: o sistema não pressupõe que um ID novo corresponda ao mesmo Pokémon na PokéAPI. Sem link, ou se a imagem não carregar, o cartão usa um símbolo de substituição. Os direitos das imagens pertencem aos respectivos titulares.
+</details>
 
-O `POST /pokemon` agora exige os atributos obrigatórios do dataset, além dos atributos de batalha já exigidos antes. Clientes externos que utilizavam o formato anterior devem enviar os novos campos; `GET /pokemon/{id}` também retorna os metadados e o link da imagem.
+---
 
-## 🚀 Como executar
-
-### Docker
-
-```bash
-docker compose up --build
-```
-
-Abra [a aplicação](http://localhost:8000) para criar seu treinador e descobrir seu time e [o Swagger](http://localhost:8000/docs) para explorar e testar a API. Os dados ficam em um volume Docker persistente.
-
-### Python
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-## 🧠 Como a recomendação funciona
-
-O componente de conteúdo combina os tipos favoritos com o estilo escolhido: ataque, defesa, velocidade, equilibrado ou priorização de tipos. A normalização dos atributos usa 255, limite adotado para esta demonstração. O colaborativo compara avaliações de Pokémon em comum usando cosseno e considera avaliações de treinadores semelhantes. Para candidatos com sinal colaborativo, o score é 70% conteúdo e 30% colaborativo; caso contrário, usa conteúdo. Sem histórico, o treinador recém-criado recebe recomendações baseadas em suas preferências.
-
-Os pesos são escolhas didáticas, sem ajuste ou validação com usuários reais. O score expressa compatibilidade aproximada por Pokémon; não garante o melhor time de batalha, cobertura de tipos ou sinergia entre membros. Os Pokémon já avaliados ainda podem ser recomendados. Pode haver menos de seis resultados se o catálogo elegível for pequeno.
-
-## 🔌 API
-
-- `GET /opcoes`: tipos e estratégias aceitos.
-- `POST /treinadores` e `PUT /treinadores/{id}/preferencias`: criar treinador e atualizar suas preferências.
-- `GET /treinadores/{id}/time`: obter até seis recomendações; aceita `estilo` opcional.
-- `POST /treinadores/{id}/avaliacoes`: registrar ou atualizar uma nota de 1 a 5.
-- `GET /pokemon`, `GET /pokemon/{id}` e `POST /pokemon`: buscar, consultar e cadastrar Pokémon.
-- `GET /objetos` e `POST /objetos`: listar e cadastrar objetos, como Pokébolas e poções.
-
-As operações e os campos estão documentados no Swagger em `/docs`.
-
-## 🧪 Testes
-
-```bash
-pip install httpx
-python -m unittest discover -s tests -v
-```
-
-Os testes usam um banco temporário separado do banco da aplicação.
+<div align="center"><sub>Feito para aprender, experimentar e descobrir novos times. ✦</sub></div>
