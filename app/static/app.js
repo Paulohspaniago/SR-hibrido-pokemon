@@ -221,6 +221,7 @@ pokemonForm.addEventListener('submit', async (event) => {
   try {
     const pokemon = await request('/pokemon', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
     pokemonMessage.textContent = `${pokemon.nome} foi adicionado ao catálogo! Gere o time novamente para incluí-lo na busca.`;
+    window.dispatchEvent(new CustomEvent('pokemon:cadastrado'));
     pokemonForm.reset(); $('#pk-prob').disabled = true; $('#pk-prob').required = false;
   } catch (error) {
     pokemonMessage.classList.add('error'); pokemonMessage.textContent = error.message;

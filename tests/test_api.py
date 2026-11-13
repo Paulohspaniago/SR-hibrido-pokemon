@@ -55,6 +55,23 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(self.client.get('/static/app.js').status_code, 200)
         self.assertEqual(self.client.get('/static/style.css').status_code, 200)
         self.assertEqual(self.client.get('/static/catalog.css').status_code, 200)
+        self.assertIn('Sua Pokédex', self.client.get('/').text)
+        self.assertEqual(self.client.get('/static/pokedex.js').status_code, 200)
+        self.assertEqual(self.client.get('/static/pokedex.css').status_code, 200)
+
+    def test_busca_e_paginacao_do_catalogo(self):
+        busca = self.client.get('/pokemon', params={'busca': 'pikA', 'limite': 24})
+        self.assertEqual(busca.status_code, 200)
+        self.assertEqual([p['nome'] for p in busca.json()], ['Pikachu'])
+        por_id = self.client.get('/pokemon', params={'busca': '25'}).json()
+        self.assertIn('Pikachu', [p['nome'] for p in por_id])
+        pagina1 = self.client.get('/pokemon', params={'limite': 10, 'offset': 0}).json()
+        pagina2 = self.client.get('/pokemon', params={'limite': 10, 'offset': 10}).json()
+        self.assertEqual(len(pagina1), 10)
+        self.assertEqual(len(pagina2), 10)
+        self.assertFalse({p['id'] for p in pagina1} & {p['id'] for p in pagina2})
+        self.assertEqual(self.client.get('/pokemon', params={'offset': -1}).status_code, 422)
+        self.assertEqual(self.client.get('/pokemon', params={'busca': '%'}).json(), [])
 
     def test_preferencias_persistem_e_alteram_time(self):
         treinador = self.client.post('/treinadores', json={'nome': 'Persistência', 'tipos': ['Water'], 'estilo': 'tipo'}).json()

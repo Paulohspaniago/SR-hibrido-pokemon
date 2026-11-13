@@ -196,11 +196,18 @@ def atualizar_preferencias(treinador_id: int, p: Preferencias):
 
 
 @app.get('/pokemon')
-def listar_pokemon(busca: str = '', limite: int = 30):
+def listar_pokemon(busca: str = '', limite: int = 30, offset: int = 0):
     if not 1 <= limite <= 100:
         raise HTTPException(422, 'Limite deve estar entre 1 e 100.')
+    if offset < 0:
+        raise HTTPException(422, 'Offset não pode ser negativo.')
+    termo = busca.strip().replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
     with conectar() as c:
-        return [dict(r) for r in c.execute('SELECT * FROM pokemon WHERE nome LIKE ? ORDER BY id LIMIT ?', (f'%{busca}%', limite))]
+        if termo.isascii() and termo.isdigit() and len(termo) <= 18:
+            cursor = c.execute("SELECT * FROM pokemon WHERE nome LIKE ? ESCAPE '\\' OR id = ? ORDER BY id LIMIT ? OFFSET ?", (f'%{termo}%', int(termo), limite, offset))
+        else:
+            cursor = c.execute("SELECT * FROM pokemon WHERE nome LIKE ? ESCAPE '\\' ORDER BY id LIMIT ? OFFSET ?", (f'%{termo}%', limite, offset))
+        return [dict(r) for r in cursor]
 
 
 @app.get('/pokemon/{pokemon_id}')
