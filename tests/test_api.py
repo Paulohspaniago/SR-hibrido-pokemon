@@ -49,6 +49,22 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(r.status_code, 201)
         self.assertTrue(any(x['nome'] == 'Pokébola de teste' for x in self.client.get('/objetos').json()))
 
+    def test_interface_e_recursos_estaticos(self):
+        self.assertIn('Seu treinador', self.client.get('/').text)
+        self.assertEqual(self.client.get('/static/app.js').status_code, 200)
+        self.assertEqual(self.client.get('/static/style.css').status_code, 200)
+
+    def test_preferencias_persistem_e_alteram_time(self):
+        treinador = self.client.post('/treinadores', json={'nome': 'Persistência', 'tipos': ['Water'], 'estilo': 'tipo'}).json()
+        anterior = self.client.get(f"/treinadores/{treinador['id']}/time").json()['time']
+        resposta = self.client.put(f"/treinadores/{treinador['id']}/preferencias", json={'tipos': ['Fire'], 'estilo': 'tipo', 'incluir_lendarios': False})
+        self.assertEqual(resposta.status_code, 200)
+        modulo.inicializar()
+        depois = self.client.get(f"/treinadores/{treinador['id']}/time").json()
+        self.assertEqual(depois['treinador']['tipos'], ['Fire'])
+        self.assertFalse(depois['treinador']['incluir_lendarios'])
+        self.assertNotEqual([p['id'] for p in anterior], [p['id'] for p in depois['time']])
+
     def test_cadastrar_pokemon_e_persistir(self):
         pokemon = {'id': 9999, 'nome': 'PokemonTeste', 'tipo1': 'Water', 'hp': 50, 'ataque': 55, 'defesa': 60, 'velocidade': 45, 'ataque_especial': 40, 'defesa_especial': 50, 'geracao': 1, 'lendario': False}
         self.assertEqual(self.client.post('/pokemon', json=pokemon).status_code, 201)
