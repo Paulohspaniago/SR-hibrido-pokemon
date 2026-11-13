@@ -81,7 +81,8 @@ Os gráficos mostram os atributos dos Pokémon recomendados; eles não represent
 <details>
 <summary><strong>03 · Cadastrar e consultar Pokémon</strong></summary>
 
-- Procurar Pokémon na API por nome ou consultar um item pelo número da Pokédex.
+- Na aba **Pokédex**, buscar Pokémon por nome ou número, carregar mais resultados e abrir seus atributos.
+- Consultar o catálogo também pela API, por nome ou número da Pokédex.
 - Adicionar Pokémon na página ou pela API, preenchendo os atributos obrigatórios do catálogo.
 - Calcular automaticamente o total dos seis atributos de batalha. Segundo tipo e segundo grupo de ovo são opcionais; a probabilidade de ser macho é exigida quando o Pokémon possui gênero.
 - Informar opcionalmente um link direto de imagem. Sem ele, o cartão mostra um símbolo de substituição.
@@ -123,7 +124,7 @@ Todos os campos e operações podem ser experimentados no [Swagger](http://local
 | `PUT` | `/treinadores/{id}/preferencias` | Atualizar preferências. |
 | `GET` | `/treinadores/{id}/time` | Obter até seis Pokémon; aceita `estilo` opcional. |
 | `POST` | `/treinadores/{id}/avaliacoes` | Registrar ou atualizar uma avaliação. |
-| `GET` | `/pokemon` | Buscar Pokémon; aceita `busca` e `limite`. |
+| `GET` | `/pokemon` | Buscar Pokémon; aceita `busca`, `limite` e `offset` para paginação. |
 | `GET` | `/pokemon/{id}` | Consultar os dados de um Pokémon. |
 | `POST` | `/pokemon` | Cadastrar Pokémon. |
 | `GET` | `/objetos` | Listar objetos cadastrados. |
