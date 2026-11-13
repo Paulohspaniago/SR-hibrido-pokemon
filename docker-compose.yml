@@ -1,0 +1,9 @@
+services:
+  pokemon:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - pokemon_data:/data
+volumes:
+  pokemon_data:
