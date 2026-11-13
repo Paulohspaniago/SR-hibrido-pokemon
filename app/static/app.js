@@ -46,6 +46,7 @@ function makeTypeOptions(types) {
     const input = document.createElement('input'); input.type = 'checkbox'; input.value = type; input.name = 'tipos';
     const text = document.createElement('span'); text.textContent = typeNames[type] || type;
     label.append(input, text); container.append(label);
+    for (const id of ['#pk-tipo1', '#pk-tipo2']) $(id).add(new Option(typeNames[type] || type, type));
   }
 }
 
@@ -120,10 +121,17 @@ function renderTeam(team) {
     const card = element('article', 'pokemon-card');
     const visual = element('div', 'pokemon-visual'); visual.style.background = typeColors[pokemon.tipo1] || '#f5f5f1';
     const number = element('span', 'pokemon-number', `#${String(pokemon.id).padStart(3, '0')}`);
-    const image = document.createElement('img'); image.alt = `Ilustração de ${pokemon.nome}`;
-    image.loading = 'lazy'; image.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${encodeURIComponent(pokemon.id)}.png`;
-    image.addEventListener('error', () => { image.hidden = true; });
-    visual.append(number, image);
+    const placeholder = element('span', 'pokemon-image-placeholder', '◉');
+    placeholder.setAttribute('aria-label', 'Imagem não disponível');
+    visual.append(number, placeholder);
+    if (pokemon.imagem_url) {
+      const image = document.createElement('img'); image.alt = `Ilustração de ${pokemon.nome}`;
+      image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
+      image.addEventListener('load', () => { placeholder.hidden = true; });
+      image.addEventListener('error', () => { image.hidden = true; });
+      image.src = pokemon.imagem_url;
+      visual.append(image);
+    }
     const info = element('div', 'pokemon-info'); info.append(element('h4', '', pokemon.nome));
     const types = element('div', 'pokemon-types');
     for (const type of [pokemon.tipo1, pokemon.tipo2].filter(Boolean)) types.append(element('span', 'type-tag', typeNames[type] || type));
@@ -188,6 +196,35 @@ $('#descobrir').addEventListener('click', async () => {
     $('#estado').textContent = data.time.length ? 'TIME ENCONTRADO' : 'SEM RESULTADOS';
   } catch (error) { setMessage(error.message, true); $('#estado').textContent = 'ERRO NA BUSCA'; }
   finally { button.disabled = false; }
+});
+
+const pokemonForm = $('#pokemon-form');
+const pokemonMessage = $('#pokemon-mensagem');
+$('#pk-genero').addEventListener('change', () => {
+  const probability = $('#pk-prob');
+  probability.disabled = $('#pk-genero').value !== 'true';
+  probability.required = !probability.disabled;
+  if (probability.disabled) probability.value = '';
+});
+
+pokemonForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const values = new FormData(pokemonForm);
+  const numericFields = ['id', 'hp', 'ataque', 'defesa', 'ataque_especial', 'defesa_especial', 'velocidade', 'geracao', 'altura_m', 'peso_kg', 'taxa_captura'];
+  const data = Object.fromEntries(values);
+  for (const field of numericFields) data[field] = Number(data[field]);
+  for (const field of ['lendario', 'tem_genero', 'tem_megaevolucao']) data[field] = data[field] === 'true';
+  data.prob_macho = data.tem_genero ? Number(data.prob_macho) : null;
+  for (const field of ['tipo2', 'grupo_ovo2', 'imagem_url']) data[field] = data[field]?.trim() || null;
+  const button = $('#pokemon-salvar');
+  button.disabled = true; pokemonMessage.classList.remove('error'); pokemonMessage.textContent = 'Salvando Pokémon...';
+  try {
+    const pokemon = await request('/pokemon', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
+    pokemonMessage.textContent = `${pokemon.nome} foi adicionado ao catálogo! Gere o time novamente para incluí-lo na busca.`;
+    pokemonForm.reset(); $('#pk-prob').disabled = true; $('#pk-prob').required = false;
+  } catch (error) {
+    pokemonMessage.classList.add('error'); pokemonMessage.textContent = error.message;
+  } finally { button.disabled = false; }
 });
 
 try {

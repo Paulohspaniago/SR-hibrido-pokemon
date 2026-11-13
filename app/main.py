@@ -10,7 +10,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 from typing import Literal
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -27,6 +27,33 @@ def conectar():
     return conn
 
 
+def enriquecer_catalogo(c):
+    """Adiciona metadados do CSV sem substituir Pokémon cadastrados pelo usuário."""
+    colunas = {
+        'total': 'INTEGER', 'cor': 'TEXT', 'tem_genero': 'INTEGER', 'prob_macho': 'REAL',
+        'grupo_ovo1': 'TEXT', 'grupo_ovo2': 'TEXT', 'tem_megaevolucao': 'INTEGER',
+        'altura_m': 'REAL', 'peso_kg': 'REAL', 'taxa_captura': 'INTEGER',
+        'estilo_corpo': 'TEXT', 'imagem_url': 'TEXT',
+    }
+    existentes = {r['name'] for r in c.execute('PRAGMA table_info(pokemon)')}
+    for nome, tipo in colunas.items():
+        if nome not in existentes:
+            c.execute(f'ALTER TABLE pokemon ADD COLUMN {nome} {tipo}')
+    if c.execute("SELECT 1 FROM configuracao WHERE chave='metadados_csv_v1'").fetchone():
+        return
+    with (ROOT / 'data' / 'pokemon_alopez247.csv').open(encoding='utf-8', newline='') as arquivo:
+        for p in csv.DictReader(arquivo):
+            imagem = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{int(p['Number'])}.png"
+            c.execute('''UPDATE pokemon SET total=?, cor=?, tem_genero=?, prob_macho=?, grupo_ovo1=?,
+                grupo_ovo2=?, tem_megaevolucao=?, altura_m=?, peso_kg=?, taxa_captura=?, estilo_corpo=?, imagem_url=?
+                WHERE id=? AND nome=?''',
+                (int(p['Total']), p['Color'], int(p['hasGender'].lower() == 'true'),
+                 float(p['Pr_Male']) if p['Pr_Male'] else None, p['Egg_Group_1'], p['Egg_Group_2'] or None,
+                 int(p['hasMegaEvolution'].lower() == 'true'), float(p['Height_m']), float(p['Weight_kg']),
+                 int(p['Catch_Rate']), p['Body_Style'], imagem, int(p['Number']), p['Name']))
+    c.execute("INSERT INTO configuracao VALUES ('metadados_csv_v1', '1')")
+
+
 def inicializar():
     with conectar() as c:
         c.executescript('''
@@ -39,12 +66,13 @@ def inicializar():
         if not c.execute("SELECT 1 FROM configuracao WHERE chave='dados_iniciais'").fetchone():
             with (ROOT / 'data' / 'pokemon_alopez247.csv').open(encoding='utf-8', newline='') as f:
                 for p in csv.DictReader(f):
-                    c.execute('INSERT INTO pokemon VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (int(p['Number']), p['Name'], p['Type_1'], p['Type_2'] or None, int(p['HP']), int(p['Attack']), int(p['Defense']), int(p['Speed']), int(p['Sp_Atk']), int(p['Sp_Def']), int(p['Generation']), int(p['isLegendary'].lower() == 'true')))
+                    c.execute('INSERT INTO pokemon (id,nome,tipo1,tipo2,hp,ataque,defesa,velocidade,ataque_especial,defesa_especial,geracao,lendario) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (int(p['Number']), p['Name'], p['Type_1'], p['Type_2'] or None, int(p['HP']), int(p['Attack']), int(p['Defense']), int(p['Speed']), int(p['Sp_Atk']), int(p['Sp_Def']), int(p['Generation']), int(p['isLegendary'].lower() == 'true')))
             treinadores = [('Lia', ['Fire'], 'ataque', [4, 6, 37, 58, 77]), ('Caio', ['Water'], 'defesa', [7, 9, 54, 79, 131]), ('Bianca', ['Grass', 'Poison'], 'tipo', [1, 3, 43, 69, 25]), ('Rafael', ['Electric', 'Flying'], 'velocidade', [25, 26, 16, 21, 6]), ('Sofia', ['Psychic', 'Water'], 'equilibrado', [63, 65, 79, 120, 9])]
             for nome, tipos, estilo, favoritos in treinadores:
                 cur = c.execute('INSERT INTO treinadores(nome, tipos, estilo, lendarios) VALUES (?,?,?,?)', (nome, json.dumps(tipos), estilo, 1))
                 c.executemany('INSERT INTO avaliacoes VALUES (?,?,?)', [(cur.lastrowid, pid, 5) for pid in favoritos])
             c.execute("INSERT INTO configuracao VALUES ('dados_iniciais', '1')")
+        enriquecer_catalogo(c)
 
 
 @asynccontextmanager
@@ -79,7 +107,30 @@ class PokemonNovo(BaseModel):
     ataque_especial: int = Field(ge=1, le=255)
     defesa_especial: int = Field(ge=1, le=255)
     geracao: int = Field(ge=1)
-    lendario: bool = False
+    lendario: bool
+    cor: str = Field(min_length=1, max_length=40)
+    tem_genero: bool
+    prob_macho: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False)
+    grupo_ovo1: str = Field(min_length=1, max_length=50)
+    grupo_ovo2: str | None = Field(default=None, min_length=1, max_length=50)
+    tem_megaevolucao: bool
+    altura_m: float = Field(gt=0, allow_inf_nan=False)
+    peso_kg: float = Field(gt=0, allow_inf_nan=False)
+    taxa_captura: int = Field(ge=0, le=255)
+    estilo_corpo: str = Field(min_length=1, max_length=80)
+    imagem_url: HttpUrl | None = None
+
+    @model_validator(mode='after')
+    def validar_detalhes(self):
+        if not self.nome.strip() or not self.cor.strip() or not self.grupo_ovo1.strip() or not self.estilo_corpo.strip():
+            raise ValueError('Os campos de texto obrigatórios não podem conter apenas espaços.')
+        if self.tem_genero and self.prob_macho is None:
+            raise ValueError('Informe a probabilidade de ser macho para Pokémon com gênero.')
+        if not self.tem_genero and self.prob_macho is not None:
+            raise ValueError('A probabilidade de ser macho deve ficar vazia para Pokémon sem gênero.')
+        if self.tipo2 and self.tipo1 == self.tipo2:
+            raise ValueError('O segundo tipo deve ser diferente do primeiro.')
+        return self
 
 
 class Avaliacao(BaseModel):
@@ -166,7 +217,17 @@ def criar_pokemon(p: PokemonNovo):
     validar_tipos([t for t in [p.tipo1, p.tipo2] if t])
     try:
         with conectar() as c:
-            c.execute('INSERT INTO pokemon VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', (p.id, p.nome.strip(), p.tipo1, p.tipo2, p.hp, p.ataque, p.defesa, p.velocidade, p.ataque_especial, p.defesa_especial, p.geracao, int(p.lendario)))
+            c.execute('''INSERT INTO pokemon (id,nome,tipo1,tipo2,hp,ataque,defesa,velocidade,
+                ataque_especial,defesa_especial,geracao,lendario,total,cor,tem_genero,prob_macho,
+                grupo_ovo1,grupo_ovo2,tem_megaevolucao,altura_m,peso_kg,taxa_captura,estilo_corpo,imagem_url)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                (p.id, p.nome.strip(), p.tipo1, p.tipo2, p.hp, p.ataque, p.defesa, p.velocidade,
+                 p.ataque_especial, p.defesa_especial, p.geracao, int(p.lendario),
+                 p.hp + p.ataque + p.defesa + p.ataque_especial + p.defesa_especial + p.velocidade,
+                 p.cor.strip(), int(p.tem_genero), p.prob_macho, p.grupo_ovo1.strip(),
+                 p.grupo_ovo2.strip() if p.grupo_ovo2 else None, int(p.tem_megaevolucao),
+                 p.altura_m, p.peso_kg, p.taxa_captura, p.estilo_corpo.strip(),
+                 str(p.imagem_url) if p.imagem_url else None))
     except sqlite3.IntegrityError:
         raise HTTPException(409, 'ID ou nome de Pokémon já existe.')
     return pokemon_detalhes(p.id)

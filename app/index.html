@@ -6,9 +6,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/catalog.css">
 </head>
 <body>
-<header class="topbar"><a class="brand" href="#inicio"><span class="brand-mark" aria-hidden="true"><i></i></span><span>poké<span class="brand-red">match</span><small>TRAINER LAB</small></span></a><nav><a class="nav-active" href="#inicio">Seu time</a><a href="#analise">Análise</a><a href="/docs" target="_blank" rel="noopener">API <span>↗</span></a></nav><span class="top-tag"><span></span> PROJETO ACADÊMICO</span></header>
+<header class="topbar"><a class="brand" href="#inicio"><span class="brand-mark" aria-hidden="true"><i></i></span><span>poké<span class="brand-red">match</span><small>TRAINER LAB</small></span></a><nav><a class="nav-active" href="#inicio">Seu time</a><a href="#analise">Análise</a><a href="#cadastro">Cadastrar Pokémon</a><a href="/docs" target="_blank" rel="noopener">API <span>↗</span></a></nav><span class="top-tag"><span></span> PROJETO ACADÊMICO</span></header>
 <main id="inicio">
   <div class="breadcrumb">EXPLORAR <span>/</span> <strong>SEU TIME</strong></div>
   <section class="intro"><div><div class="eyebrow"><span class="sparkle">✦</span> SUA JORNADA COMEÇA AQUI</div><h1>Um time com<br><em>a sua cara.</em></h1><p>Escolha suas preferências e encontre Pokémon que combinam com o seu jeito de jogar.</p><div class="intro-pills"><span><b>✦</b> Recomendações para você</span><span><b>◇</b> 721 Pokémon no catálogo inicial</span></div></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-disc"><div class="pokeball"><div class="pokeball-band"><span></span></div></div></div><span class="hero-star star-one">✦</span><span class="hero-star star-two">✧</span><span class="hero-label">ENCONTRE SEU PAR IDEAL <b>↗</b></span></div></section>
@@ -29,6 +30,40 @@
     </section></div>
   </section>
   <section class="analytics" id="analise"><div class="section-heading"><div><span class="section-kicker">OLHO NOS NÚMEROS</span><h2>Conheça seu time melhor</h2><p>Uma visão dos atributos base dos Pokémon recomendados.</p></div><span class="section-count">02 / 02</span></div><div id="painel-vazio" class="analytics-empty"><span>✳</span> Encontre seu time para explorar os atributos.</div><div id="dashboard" class="dashboard" hidden></div><p class="disclaimer">As médias e gráficos consideram apenas os Pokémon exibidos no time. HP, ataque, defesa e velocidade são atributos base do dataset.</p></section>
+  <section class="catalog-section" id="cadastro"><div class="section-heading"><div><span class="section-kicker">EXPANDA O CATÁLOGO</span><h2>Cadastre um Pokémon</h2><p>Adicione um Pokémon ao catálogo usado nas próximas recomendações.</p></div><span class="section-count">EXTRA</span></div>
+    <details class="panel catalog-panel"><summary>Adicionar novo Pokémon <span>＋</span></summary><form id="pokemon-form" class="catalog-form">
+      <p class="catalog-note">Preencha os atributos do dataset. Campos opcionais são indicados; o total é calculado automaticamente.</p>
+      <div class="catalog-grid">
+        <div><label for="pk-id">NÚMERO NA POKÉDEX</label><input id="pk-id" name="id" type="number" min="1" step="1" required></div>
+        <div><label for="pk-nome">NOME</label><input id="pk-nome" name="nome" maxlength="80" required></div>
+        <div><label for="pk-tipo1">TIPO PRINCIPAL</label><select id="pk-tipo1" name="tipo1" required><option value="">Selecione</option></select></div>
+        <div><label for="pk-tipo2">SEGUNDO TIPO · OPCIONAL</label><select id="pk-tipo2" name="tipo2"><option value="">Nenhum</option></select></div>
+        <div><label for="pk-geracao">GERAÇÃO</label><input id="pk-geracao" name="geracao" type="number" min="1" step="1" required></div>
+        <div><label for="pk-lendario">É LENDÁRIO?</label><select id="pk-lendario" name="lendario" required><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></select></div>
+      </div>
+      <h3>Atributos de batalha</h3><div class="catalog-grid stats-grid">
+        <div><label for="pk-hp">VIDA · HP</label><input id="pk-hp" name="hp" type="number" min="1" max="255" step="1" required></div>
+        <div><label for="pk-ataque">ATAQUE</label><input id="pk-ataque" name="ataque" type="number" min="1" max="255" step="1" required></div>
+        <div><label for="pk-defesa">DEFESA</label><input id="pk-defesa" name="defesa" type="number" min="1" max="255" step="1" required></div>
+        <div><label for="pk-ataque-especial">ATAQUE ESPECIAL</label><input id="pk-ataque-especial" name="ataque_especial" type="number" min="1" max="255" step="1" required></div>
+        <div><label for="pk-defesa-especial">DEFESA ESPECIAL</label><input id="pk-defesa-especial" name="defesa_especial" type="number" min="1" max="255" step="1" required></div>
+        <div><label for="pk-velocidade">VELOCIDADE</label><input id="pk-velocidade" name="velocidade" type="number" min="1" max="255" step="1" required></div>
+      </div>
+      <h3>Características da Pokédex</h3><div class="catalog-grid">
+        <div><label for="pk-cor">COR</label><input id="pk-cor" name="cor" maxlength="40" required></div>
+        <div><label for="pk-genero">POSSUI GÊNERO?</label><select id="pk-genero" name="tem_genero" required><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></select></div>
+        <div><label for="pk-prob">PROBABILIDADE DE SER MACHO · 0 A 1</label><input id="pk-prob" name="prob_macho" type="number" min="0" max="1" step="any" disabled><small>Obrigatório quando possui gênero; deixe vazio caso contrário.</small></div>
+        <div><label for="pk-ovo1">GRUPO DE OVO PRINCIPAL</label><input id="pk-ovo1" name="grupo_ovo1" maxlength="50" required></div>
+        <div><label for="pk-ovo2">SEGUNDO GRUPO DE OVO · OPCIONAL</label><input id="pk-ovo2" name="grupo_ovo2" maxlength="50"></div>
+        <div><label for="pk-mega">POSSUI MEGAEVOLUÇÃO?</label><select id="pk-mega" name="tem_megaevolucao" required><option value="">Selecione</option><option value="true">Sim</option><option value="false">Não</option></select></div>
+        <div><label for="pk-altura">ALTURA · METROS</label><input id="pk-altura" name="altura_m" type="number" min="0.01" step="any" required></div>
+        <div><label for="pk-peso">PESO · KG</label><input id="pk-peso" name="peso_kg" type="number" min="0.01" step="any" required></div>
+        <div><label for="pk-captura">TAXA DE CAPTURA · 0 A 255</label><input id="pk-captura" name="taxa_captura" type="number" min="0" max="255" step="1" required></div>
+        <div><label for="pk-corpo">FORMATO CORPORAL</label><input id="pk-corpo" name="estilo_corpo" maxlength="80" required></div>
+        <div class="catalog-wide"><label for="pk-imagem">LINK DA IMAGEM · OPCIONAL</label><input id="pk-imagem" name="imagem_url" type="url" placeholder="https://exemplo.com/pokemon.png"><small>Informe um link direto para uma imagem. Sem link, o cartão aparecerá sem imagem.</small></div>
+      </div><button class="button button-red" id="pokemon-salvar" type="submit">Adicionar Pokémon <span>→</span></button><p id="pokemon-mensagem" class="form-message" role="status" aria-live="polite"></p>
+    </form></details>
+  </section>
   <footer><a class="brand footer-brand" href="#inicio"><span class="brand-mark" aria-hidden="true"><i></i></span><span>poké<span class="brand-red">match</span></span></a><span>Um projeto acadêmico feito para explorar. ✦</span><a href="/docs">Documentação da API ↗</a></footer>
 </main><script type="module" src="/static/app.js"></script>
 </body></html>
