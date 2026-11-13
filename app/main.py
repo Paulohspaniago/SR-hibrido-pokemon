@@ -9,6 +9,7 @@ import sqlite3
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import Literal
 
@@ -53,6 +54,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title='Pokémon: encontre seu time', version='1.0.0', lifespan=lifespan)
+app.mount('/static', StaticFiles(directory=ROOT / 'app' / 'static'), name='static')
 
 
 class Preferencias(BaseModel):
