@@ -11,6 +11,10 @@ com características e avaliações de Pokémon para sugerir um time personaliza
 
 </div>
 
+<div align="center">
+  <img src="docs/imagens/home.jpg" alt="Página inicial do PokéMatch" width="100%">
+</div>
+
 ---
 
 ## ✦ Sobre o projeto
@@ -64,6 +68,8 @@ No Windows, ative o ambiente com `.venv\Scripts\activate`. A aplicação usa SQL
 
 Os cinco perfis iniciais — Lia, Caio, Bianca, Rafael e Sofia — são exemplos fictícios.
 
+![Preferências da treinadora Lia e os seis Pokémon recomendados](docs/imagens/time.jpg)
+
 </details>
 
 <details>
@@ -75,6 +81,8 @@ Os cinco perfis iniciais — Lia, Caio, Bianca, Rafael e Sofia — são exemplos
 - Alterar as preferências e executar novamente a busca.
 
 Os gráficos mostram os atributos dos Pokémon recomendados; eles não representam evolução temporal ou desempenho em batalhas.
+
+![Gráficos de vida, ataque, defesa e velocidade do time recomendado](docs/imagens/graficos.jpg)
 
 </details>
 
